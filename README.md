@@ -53,6 +53,41 @@ ask "Question" and save it to variable
 say "Text", variable
 ```
 
+### Timing
+
+```
+wait 5 seconds
+wait 0.5 seconds
+```
+
+Notes:
+
+- `wait` accepts whole numbers or decimals (seconds).
+
+### GUI
+
+```
+create window main with title "Title" and size 800 by 600
+add label title to main with text "B++ GUI"
+add input first to main
+add input second to main
+add button calculate to main with text "Calculate"
+add label result to main with text "Result:"
+show main
+wait for button calculate click
+read input first and save it to one
+read input second and save it to two
+set answer to one add two
+set label result to "Result:", answer
+wait 5 seconds
+hide main
+```
+
+Notes:
+
+- Window ids are single words.
+- Use `say` to print instructions in the terminal so users aren't staring at a blank window.
+
 ### Functions
 
 ```

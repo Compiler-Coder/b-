@@ -1,0 +1,4 @@
+create window main with title "Title" and size 1920 by 1080
+show main
+wait 5 seconds
+hide main

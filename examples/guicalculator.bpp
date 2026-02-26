@@ -1,0 +1,26 @@
+create window calc with title "Calculator" and size 640 by 400
+add label title to calc with text "B++ Calculator"
+add label instructions to calc with text "Enter two numbers and click Calculate"
+add input first to calc
+add input second to calc
+add button calculate to calc with text "Calculate"
+add label add_label to calc with text "Addition:"
+add label sub_label to calc with text "Subtraction:"
+add label div_label to calc with text "Division:"
+add label mul_label to calc with text "Multiplication:"
+show calc
+
+repeat while 1 is equal to 1
+  wait for button calculate click
+  read input first and save it to one
+  read input second and save it to two
+
+  set addition to one add two
+  set subtraction to one subtract two
+  set division to one divide two
+  set multiplication to one multiply two
+
+  set label add_label to "Addition:", addition
+  set label sub_label to "Subtraction:", subtraction
+  set label div_label to "Division:", division
+  set label mul_label to "Multiplication:", multiplication
