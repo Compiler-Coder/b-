@@ -1,0 +1,8 @@
+function add with one and two
+  set result to one add two
+  give back result
+
+ask "What is your first number?" and save it to first
+ask "What is your second number?" and save it to second
+set answer to add using first and second
+say "The result is", answer

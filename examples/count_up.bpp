@@ -1,0 +1,10 @@
+set number to 1
+
+repeat while number is less than 5
+  if number is less than 3
+    say "Small", number
+  otherwise
+    say "Getting bigger", number
+  change number to number add 1
+
+say "Done"

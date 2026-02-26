@@ -1,0 +1,43 @@
+function add with one and two
+  set result to one add two
+  give back result
+
+function subtract with one and two
+  set result to one subtract two
+  give back result
+
+function multiply with one and two
+  set result to one multiply two
+  give back result
+
+function divide with one and two
+  if two is equal to 0
+    say "Error: Cannot divide by zero."
+    give back 0
+  otherwise
+    set result to one divide two
+    give back result
+
+say "Welcome to the B++ Calculator"
+
+ask "Enter your first number:" and save it to first
+ask "Enter your second number:" and save it to second
+
+ask "Choose operation: add, subtract, multiply, divide" and save it to operation
+
+if operation is equal to "add"
+  set answer to add using first and second
+otherwise
+  if operation is equal to "subtract"
+    set answer to subtract using first and second
+  otherwise
+    if operation is equal to "multiply"
+      set answer to multiply using first and second
+    otherwise
+      if operation is equal to "divide"
+        set answer to divide using first and second
+      otherwise
+        say "Unknown operation."
+        give back 0
+
+say "The result is", answer
