@@ -153,6 +153,19 @@ Use the included interpreter:
 python bpp.py examples/add_numbers.bpp
 ```
 
+## Interactive Mode
+
+Run the interpreter without a file to enter interactive mode:
+
+```
+python bpp.py
+```
+
+Notes:
+
+- Use a blank line to execute a multi-line block (like `if`, `repeat`, `function`).
+- Type `exit` or `quit` to leave.
+
 ## Writing B++ Programs
 
 - Use clear, plain-English sentences.

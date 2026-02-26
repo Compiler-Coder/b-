@@ -313,11 +313,71 @@ def run_file(path):
     exec_block(stmts, env, functions)
 
 
+def is_block_starter(line):
+    if line.startswith("function "):
+        return True
+    if line.startswith("if "):
+        return True
+    if line == "otherwise":
+        return True
+    if line.startswith("repeat while "):
+        return True
+    if line.startswith("repeat ") and line.endswith(" times"):
+        return True
+    return False
+
+
+def run_buffer(lines, env, functions):
+    try:
+        stmts = parse_lines([l + "\n" for l in lines])
+        exec_block(stmts, env, functions)
+    except Exception as exc:
+        print(f"Error: {exc}")
+
+
+def repl():
+    print("B++ interactive mode. Type 'exit' or 'quit' to leave.")
+    env = {}
+    functions = {}
+    buffer = []
+    in_block = False
+    while True:
+        prompt = "... " if in_block else ">>> "
+        try:
+            line = input(prompt)
+        except EOFError:
+            print()
+            break
+
+        stripped = line.strip()
+        if not in_block and stripped in ("exit", "quit"):
+            break
+
+        if stripped == "":
+            if buffer:
+                run_buffer(buffer, env, functions)
+                buffer = []
+                in_block = False
+            continue
+
+        if not in_block:
+            if is_block_starter(stripped):
+                in_block = True
+                buffer.append(line)
+            else:
+                run_buffer([line], env, functions)
+        else:
+            buffer.append(line)
+
+
 def main(argv):
-    if len(argv) != 2:
-        print("Usage: bpp.py <file.bpp>")
-        return 1
-    run_file(argv[1])
+    if len(argv) == 1:
+        repl()
+        return 0
+    if len(argv) == 2:
+        run_file(argv[1])
+        return 0
+    print("Usage: bpp.py <file.bpp>")
     return 0
 
 
