@@ -185,7 +185,7 @@ Keep it small and direct:
 Use the included interpreter:
 
 ```
-python bpp.py examples/add_numbers.bpp
+./bpp examples/add_numbers.bpp
 ```
 
 ## Interactive Mode
@@ -193,8 +193,20 @@ python bpp.py examples/add_numbers.bpp
 Run the interpreter without a file to enter interactive mode:
 
 ```
-python bpp.py
+./bpp
 ```
+
+## Install as a Global Command (Linux)
+
+To run `bpp` from anywhere, make the launcher executable and add this repo to your `PATH`:
+
+```
+chmod +x /path/to/b++/bpp
+echo 'export PATH="/path/to/b++:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+If you use `zsh`, write to `~/.zshrc` instead of `~/.bashrc`.
 
 Notes:
 

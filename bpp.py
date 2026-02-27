@@ -675,14 +675,16 @@ def repl():
             buffer.append(line)
 
 
-def main(argv):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     if len(argv) == 1:
         repl()
         return 0
     if len(argv) == 2:
         run_file(argv[1])
         return 0
-    print("Usage: bpp.py <file.bpp>")
+    print("Usage: bpp [file.bpp]")
     return 0
 
 
