@@ -23,7 +23,8 @@ say "Welcome to the B++ Calculator"
 ask "Enter your first number:" and save it to first
 ask "Enter your second number:" and save it to second
 
-ask "Choose operation: add, subtract, multiply, divide" and save it to operation
+say "Choose operation: add, subtract, multiply, divide"
+ask "" and save it to operation
 
 if operation is equal to "add"
   set answer to add using first and second
