@@ -217,6 +217,20 @@ def split_commas(text):
     return parts
 
 
+def strip_comments(text):
+    in_quotes = False
+    result = []
+    for ch in text:
+        if ch == '"':
+            in_quotes = not in_quotes
+            result.append(ch)
+            continue
+        if ch == "#" and not in_quotes:
+            break
+        result.append(ch)
+    return "".join(result)
+
+
 def parse_statement(line):
     if line.startswith("function "):
         rest = line[len("function "):].strip()
@@ -353,12 +367,13 @@ def parse_lines(lines):
     last_node = None
 
     for raw in lines:
-        if raw.strip() == "":
+        code = strip_comments(raw)
+        if code.strip() == "":
             continue
-        if "\t" in raw:
+        if "\t" in code:
             raise ValueError("Tabs are not allowed. Use spaces for indentation.")
-        indent = len(raw) - len(raw.lstrip(" "))
-        text = raw.strip()
+        indent = len(code) - len(code.lstrip(" "))
+        text = code.strip()
 
         if indent > stack[-1][0]:
             if not last_node or "children" not in last_node:
@@ -654,11 +669,16 @@ def repl():
             print()
             break
 
-        stripped = line.strip()
+        code = strip_comments(line)
+        stripped = code.strip()
+        original_stripped = line.strip()
+
         if not in_block and stripped in ("exit", "quit"):
             break
 
         if stripped == "":
+            if original_stripped != "":
+                continue
             if buffer:
                 run_buffer(buffer, env, functions, state)
                 buffer = []
@@ -668,11 +688,11 @@ def repl():
         if not in_block:
             if is_block_starter(stripped):
                 in_block = True
-                buffer.append(line)
+                buffer.append(code)
             else:
-                run_buffer([line], env, functions, state)
+                run_buffer([code], env, functions, state)
         else:
-            buffer.append(line)
+            buffer.append(code)
 
 
 def main(argv=None):

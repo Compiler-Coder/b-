@@ -24,6 +24,7 @@ say "The result is", answer
 - One instruction per line.
 - Blocks are defined only by indentation (2 or 4 spaces, but be consistent).
 - Strings are in double quotes.
+- `#` starts a comment; everything after it on that line is ignored.
 - Variables are words (letters, numbers, underscores).
 
 ### Variables
