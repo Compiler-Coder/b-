@@ -36,6 +36,13 @@ change name to "Bob"
 
 Supports numbers and text.
 
+Boolean values are also supported with lowercase keywords:
+
+```
+set is_ready to true
+set is_done to false
+```
+
 ### Math
 
 Natural math phrasing:
@@ -108,14 +115,35 @@ Call functions with:
 set result to add using one and two
 ```
 
+Built-in functions:
+
+```
+set values to list using 10 and 20 and 30
+set count to length_of using values
+set text_value to to_text using count
+set number_value to to_number using "42.5"
+set rounded to round_number using 9.876 and 2
+```
+
 ### Conditions
 
 ```
 if number is greater than 10
   say "Big"
+otherwise if number is equal to 10
+  say "Exactly ten"
 otherwise
   say "Small"
 ```
+
+Logical operators in conditions:
+
+```
+if is_ready and not is_done
+  say "Continue"
+```
+
+Supported comparisons: `is greater than`, `is less than`, `is equal to`, `is not equal to`.
 
 ### Loops
 
@@ -125,11 +153,15 @@ repeat 5 times
 
 repeat while number is less than 10
   change number to number add 1
+
+set names to list using "Ana" and "Bo" and "Cy"
+repeat for each name in names
+  say "Hello", name
 ```
 
 ## How Indentation Defines Blocks
 
-- A block starts on the next line after a statement that introduces a block (`function`, `if`, `otherwise`, `repeat`).
+- A block starts on the next line after a statement that introduces a block (`function`, `if`, `otherwise if`, `otherwise`, `repeat`).
 - All lines indented more than the introducing line belong to that block.
 - When indentation returns to a previous level, the block ends.
 

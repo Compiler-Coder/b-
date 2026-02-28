@@ -1,0 +1,23 @@
+set raw_number to "12.7"
+set converted to to_number using raw_number
+set rounded to round_number using converted
+
+set items to list using "alpha" and "beta" and "gamma"
+set item_count to length_of using items
+set count_text to to_text using item_count
+
+say "Item count:", count_text
+
+if rounded is greater than 20
+  say "large"
+otherwise if rounded is equal to 13 or rounded is equal to 12
+  say "middle"
+otherwise
+  say "small"
+
+set enabled to true
+if enabled and item_count is greater than 0 and not false
+  say "enabled with items"
+
+repeat for each item in items
+  say "item:", item

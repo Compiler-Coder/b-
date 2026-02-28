@@ -9,6 +9,7 @@ OPS = {
     "multiply": 2,
     "divide": 2,
 }
+BUILTIN_MISSING = object()
 
 class ReturnSignal(Exception):
     def __init__(self, value):
@@ -347,8 +348,18 @@ def parse_statement(line):
         cond_tokens = tokenize(line[len("if "):].strip())
         return {"type": "if", "cond": cond_tokens, "children": []}
 
+    if line.startswith("otherwise if "):
+        cond_tokens = tokenize(line[len("otherwise if "):].strip())
+        return {"type": "otherwise_if", "cond": cond_tokens, "children": []}
+
     if line == "otherwise":
         return {"type": "otherwise", "children": []}
+
+    if line.startswith("repeat for each "):
+        m = re.match(r"^repeat\s+for\s+each\s+(\w+)\s+in\s+(.+)$", line)
+        if not m:
+            raise ValueError(f"Invalid repeat for each statement: {line}")
+        return {"type": "repeat_for_each", "name": m.group(1), "iterable": tokenize(m.group(2)), "children": []}
 
     if line.startswith("repeat while "):
         cond_tokens = tokenize(line[len("repeat while "):].strip())
@@ -399,6 +410,10 @@ def eval_token(tok, env, functions, state):
     if ttype == "str":
         return val
     if ttype == "word":
+        if val == "true":
+            return True
+        if val == "false":
+            return False
         if re.fullmatch(r"-?\d+", val):
             return int(val)
         if re.fullmatch(r"-?\d+\.\d+", val):
@@ -471,19 +486,17 @@ def eval_expr(tokens, env, functions, state):
     return stack[0]
 
 
-def eval_condition(tokens, env, functions, state):
+def eval_comparison_or_truthy(tokens, env, functions, state):
     words = [t[1] if t[0] == "word" else None for t in tokens]
     if "is" not in words:
-        raise ValueError("Condition must include 'is'")
-    is_idx = words.index("is")
+        return bool(eval_expr(tokens, env, functions, state))
 
+    is_idx = words.index("is")
     left_tokens = tokens[:is_idx]
     right_tokens = []
 
     def match_phrase(phrase):
-        if words[is_idx + 1:is_idx + 1 + len(phrase)] == phrase:
-            return True
-        return False
+        return words[is_idx + 1:is_idx + 1 + len(phrase)] == phrase
 
     if match_phrase(["greater", "than"]):
         right_tokens = tokens[is_idx + 3:]
@@ -501,7 +514,104 @@ def eval_condition(tokens, env, functions, state):
     raise ValueError("Unknown condition")
 
 
+def eval_condition(tokens, env, functions, state):
+    index = 0
+
+    def match_word(word):
+        nonlocal index
+        if index < len(tokens) and tokens[index] == ("word", word):
+            index += 1
+            return True
+        return False
+
+    def next_logical_boundary(start):
+        pos = start
+        while pos < len(tokens):
+            tok = tokens[pos]
+            if tok[0] == "word" and tok[1] in ("and", "or"):
+                break
+            pos += 1
+        return pos
+
+    def parse_primary():
+        nonlocal index
+        end = next_logical_boundary(index)
+        segment = tokens[index:end]
+        if not segment:
+            raise ValueError("Invalid condition")
+        index = end
+        return eval_comparison_or_truthy(segment, env, functions, state)
+
+    def parse_not():
+        if match_word("not"):
+            return not bool(parse_not())
+        return parse_primary()
+
+    def parse_and():
+        value = bool(parse_not())
+        while match_word("and"):
+            rhs = bool(parse_not())
+            value = value and rhs
+        return value
+
+    def parse_or():
+        value = bool(parse_and())
+        while match_word("or"):
+            rhs = bool(parse_and())
+            value = value or rhs
+        return value
+
+    if not tokens:
+        raise ValueError("Condition cannot be empty")
+    result = parse_or()
+    if index != len(tokens):
+        raise ValueError("Invalid condition syntax")
+    return result
+
+
+def call_builtin(name, args):
+    if name == "list":
+        return list(args)
+    if name == "to_number":
+        if len(args) != 1:
+            raise ValueError("to_number expects 1 arg")
+        value = args[0]
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, (int, float)):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if re.fullmatch(r"-?\d+", stripped):
+                return int(stripped)
+            if re.fullmatch(r"-?\d+\.\d+", stripped):
+                return float(stripped)
+        raise ValueError("to_number expects a numeric string or number")
+    if name == "to_text":
+        if len(args) != 1:
+            raise ValueError("to_text expects 1 arg")
+        return str(args[0])
+    if name == "length_of":
+        if len(args) != 1:
+            raise ValueError("length_of expects 1 arg")
+        value = args[0]
+        if not isinstance(value, (str, list, tuple)):
+            raise ValueError("length_of expects text or a list")
+        return len(value)
+    if name == "round_number":
+        if len(args) == 1:
+            return round(args[0])
+        if len(args) == 2:
+            return round(args[0], int(args[1]))
+        raise ValueError("round_number expects 1 or 2 args")
+    return BUILTIN_MISSING
+
+
 def call_function(name, args, env, functions, state):
+    builtin_value = call_builtin(name, args)
+    if builtin_value is not BUILTIN_MISSING:
+        return builtin_value
+
     if name not in functions:
         raise ValueError(f"Unknown function: {name}")
     fn = functions[name]
@@ -591,20 +701,38 @@ def exec_block(stmts, env, functions, state):
             else:
                 state["gui"].wait_seconds(duration)
         elif stype == "if":
-            cond = eval_condition(stmt["cond"], env, functions, state)
-            if cond:
+            branch_taken = False
+            if eval_condition(stmt["cond"], env, functions, state):
                 exec_block(stmt.get("children", []), env, functions, state)
-                if i + 1 < len(stmts) and stmts[i + 1]["type"] == "otherwise":
-                    i += 1
-            else:
-                if i + 1 < len(stmts) and stmts[i + 1]["type"] == "otherwise":
-                    exec_block(stmts[i + 1].get("children", []), env, functions, state)
-                    i += 1
-        elif stype == "otherwise":
+                branch_taken = True
+
+            j = i + 1
+            while j < len(stmts) and stmts[j]["type"] in ("otherwise_if", "otherwise"):
+                branch = stmts[j]
+                if branch["type"] == "otherwise_if":
+                    if not branch_taken and eval_condition(branch["cond"], env, functions, state):
+                        exec_block(branch.get("children", []), env, functions, state)
+                        branch_taken = True
+                    j += 1
+                    continue
+                if not branch_taken:
+                    exec_block(branch.get("children", []), env, functions, state)
+                    branch_taken = True
+                j += 1
+                break
+            i = j - 1
+        elif stype == "otherwise_if" or stype == "otherwise":
             pass
         elif stype == "repeat_times":
             count = eval_expr(stmt["count"], env, functions, state)
             for _ in range(int(count)):
+                exec_block(stmt.get("children", []), env, functions, state)
+        elif stype == "repeat_for_each":
+            iterable = eval_expr(stmt["iterable"], env, functions, state)
+            if not isinstance(iterable, (list, tuple, str)):
+                raise ValueError("repeat for each expects a list, text, or tuple")
+            for item in iterable:
+                env[stmt["name"]] = item
                 exec_block(stmt.get("children", []), env, functions, state)
         elif stype == "repeat_while":
             while eval_condition(stmt["cond"], env, functions, state):
@@ -635,7 +763,11 @@ def is_block_starter(line):
         return True
     if line.startswith("if "):
         return True
+    if line.startswith("otherwise if "):
+        return True
     if line == "otherwise":
+        return True
+    if line.startswith("repeat for each "):
         return True
     if line.startswith("repeat while "):
         return True
